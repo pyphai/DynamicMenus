@@ -1,0 +1,47 @@
+[
+    {
+        "id": "preferences",
+        "children":
+        [
+            {
+                "caption": "Package Settings",
+                "id": "package-settings",
+                "mnemonic": "P",
+                "children":
+                [
+                    {
+                        "caption": "DynamicMenus",
+                        "mnemonic": "D",
+                        "children":
+                        [
+                            {
+                                "caption": "README",
+                                "command": "open_file",
+                                "args": {"file": "${packages}/DynamicMenus/README.md"}
+                            },
+                            { "caption": "-" },
+                            {
+                                "caption": "Settings",
+                                "command": "edit_settings",
+                                "mnemonic": "S",
+                                "args": {
+                                    "base_file": "${packages}/DynamicMenus/DynamicMenus.sublime-settings",
+                                    "default": "// DynamicMenus Preferences – User\n// ====================================================\n\n{\n\t$0\n}\n"
+                                }
+                            },
+                            {
+                                "caption": "Key Bindings",
+                                "command": "edit_settings",
+                                "mnemonic": "K",
+                                "args": {
+                                    "base_file": "${packages}/DynamicMenus/Default.sublime-keymap",
+                                    "default": "[\n\t$0\n]\n"
+                                }
+                            },
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
