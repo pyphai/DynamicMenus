@@ -9,7 +9,7 @@ class OpenOtherFilesCommand(sublime_plugin.WindowCommand):
         file = self.paths[index]
         self.window.open_file(file)
 
-
+# TODO: menus cache
 class MenusOpener(MenusCreator):
     command = "open_other_files"
 

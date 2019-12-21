@@ -16,6 +16,12 @@ from ..log import Loger
 translation_task = [ None, None, None ]
 
 
+def preprocess(words, separator):
+    lines = [l.lstrip(separator) for l in words.split("\n")]
+    words = " ".join([l for l in lines if l])
+    return words
+
+
 class TranslatorCommand(sublime_plugin.TextCommand):
     style = "popup"
     mdpopups_css = "Packages/DynamicMenus/mdpopups.css"
@@ -37,7 +43,8 @@ class TranslatorCommand(sublime_plugin.TextCommand):
     def get_words(self, view):
         if view.has_non_empty_selection_region():
             selected = view.sel()[0]
-            words = view.substr(selected).strip(MenusTranslator.separator)
+            words = view.substr(selected)
+            words = preprocess(words, MenusTranslator.separator)
             if len(words) > 0:
                 translation_task[0] = selected
                 translation_task[1] = words
@@ -105,7 +112,7 @@ class TranslatorCommand(sublime_plugin.TextCommand):
 
         if self.style in pops:
             show = pops[self.style]
-            show(translation_task[0], self.parse_format(words, received))
+            show(translation_task[0], self.gen_markdown_text(words, received))
 
         elif self.style == "view":
             self.show_view(sublime.encode_value(received, pretty=True))
@@ -113,7 +120,7 @@ class TranslatorCommand(sublime_plugin.TextCommand):
     def do_translate(self):
         pass
 
-    def parse_format(self, words, received):
+    def gen_markdown_text(self, words, received):
         return ""
 
 
@@ -140,7 +147,7 @@ class YoudaoTranslator(TranslatorCommand):
             hash_algorithm.update(signStr.encode('utf-8'))
             return hash_algorithm.hexdigest()
 
-        words = translation_task[1]
+        q = translation_task[1]
         translation_task[1] = None
 
         platform = MenusTranslator.platforms["youdao"]
@@ -152,9 +159,9 @@ class YoudaoTranslator(TranslatorCommand):
 
             curtime = str(int(time.time()))
             salt = str(uuid.uuid1())
-            sign = encrypt(appKey + truncate(words) + salt + curtime + secret)
+            sign = encrypt(appKey + truncate(q) + salt + curtime + secret)
             data = {
-                "q": words,
+                "q": q,
                 "from": platform["from"],
                 "to": platform["to"],
                 "appKey": appKey,
@@ -165,8 +172,8 @@ class YoudaoTranslator(TranslatorCommand):
             }
 
         else:
-            data = { "q": words }
-            apiurl = "https://fanyi.youdao.com/openapi.do?keyfrom=divinites&key=1583185521&type=data&doctype=json&version=1.1&q=%s" % words
+            data = { "q": q }
+            apiurl = "https://fanyi.youdao.com/openapi.do?keyfrom=divinites&key=1583185521&type=data&doctype=json&version=1.1&q=%s" % q
 
         try:
             headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -175,13 +182,18 @@ class YoudaoTranslator(TranslatorCommand):
         except Exception as e:
             sublime.error_message(u"数据请求失败！")
         else:
-            self.display(words, received)
+            self.display(q, received)
 
-    def parse_format(self, words, received):
+    # TODO: Use jieba to extract words, and then
+    # combine those words as a sentence in proper
+    # length, with considering the width of char.
+    def gen_markdown_text(self, words, received):
         thread = "\n------------------------\n{}"
         body = TRANSLATOR_TEMPLATE.format("Youdao")
         footer = """<div class="footer">"""
-        body += "# {}\n".format(words)
+
+        body += "## 原文：\n"
+        body += words + "\n"
 
         if "basic" in received and received["basic"]:
             body += "## 解释：\n"
@@ -193,8 +205,12 @@ class YoudaoTranslator(TranslatorCommand):
             explains = []
             for explain in received["translation"]:
                 explains.append(explain)
+                explain = "\n".join([
+                    explain[i:i+24]
+                    for i in range(0, len(explain), 24)
+                ])
                 body += "- {}\n".format(explain)
-            translation_task[2] = " ".join(explains)
+            translation_task[2] = "\n".join(explains)
             body += COPY_AND_REPLACE
 
         if "web" in received:
@@ -226,7 +242,8 @@ class MenusTranslator(MenusCreator):
     def get_words_with_event(self, view, event):
         if view.has_non_empty_selection_region():
             selected = view.sel()[0]
-            words = view.substr(selected).strip(self.separator)
+            words = view.substr(selected)
+            words = preprocess(words, self.separator)
             if len(words) > 0:
                 translation_task[0] = selected
                 translation_task[1] = words

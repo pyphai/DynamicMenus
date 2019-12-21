@@ -3,7 +3,7 @@
 		// Translate selected words.
 	  	"translator": {
 	  		"caption": "Translator",
-  			"separator": "|\\\n\f/:,;<>.+=-_~`'\"!@#$%^&*({[（《：；·，。—￥？！……‘’“”、》）]})",
+  			"separator": "|\\\n\f\t /:,;<>.+=-_~`'\"!@#$%^&*({[（《：；·，。—￥？！……‘’“”、》）]})",
 	  		"auto_select": true,
 	  		// path to css file for mdpopups
 			"mdpopups.css": "Packages/DynamicMenus/mdpopups.css",
