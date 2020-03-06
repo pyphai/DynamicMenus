@@ -12,8 +12,11 @@ import sublime_plugin
 from ..menus_creator import MenusCreator
 from ..log import Loger
 
-# translation_task -> [ region, words, result ]
-translation_task = [ None, None, None ]
+
+class task:
+    region = None
+    words = None
+    result = None
 
 
 def preprocess(words, separator):
@@ -26,19 +29,28 @@ class TranslatorCommand(sublime_plugin.TextCommand):
     style = "popup"
     mdpopups_css = "Packages/DynamicMenus/mdpopups.css"
 
-    def run(self, edit, keyboard=False, do_replace=False):
+    def run(self, edit, action="translate"):
         view = self.view
 
-        if keyboard and not self.get_words(view):
-            sublime.status_message("No words to be translate.")
+        if action == "translate":
+            if self.get_words(view):
+                Loger.threading(self.do_translate,
+                    "Translating...", "Succeed.")
+            else:
+                sublime.status_message("No words to be translate.")
 
-        elif do_replace:
-            view.replace(edit, translation_task[0], translation_task[2])
-            translation_task[0] = translation_task[2] = None
-            return
+        elif action == "copy":
+            sublime.set_clipboard(task.result)
+            sublime.status_message("Translation copied to clipboard")
 
-        else:
-            Loger.threading(self.do_translate, "Translating...", "Succeed.")
+        elif action == "insert":
+            view.insert(edit, task.region.end(), "\n%s\n" % task.result)
+            task.region = task.result = None
+
+        elif action == "replace":
+            view.replace(edit, task.region, task.result)
+            task.region = task.result = None
+
 
     def get_words(self, view):
         if view.has_non_empty_selection_region():
@@ -46,14 +58,14 @@ class TranslatorCommand(sublime_plugin.TextCommand):
             words = view.substr(selected)
             words = preprocess(words, MenusTranslator.separator)
             if len(words) > 0:
-                translation_task[0] = selected
-                translation_task[1] = words
+                task.region = selected
+                task.words = words
                 return True
         region = view.word(view.sel()[0])
         word = view.substr(region).strip(MenusTranslator.separator)
         if len(word) > 0:
-            translation_task[0] = region
-            translation_task[1] = word
+            task.region = region
+            task.words = word
             return True
         return False
 
@@ -97,12 +109,7 @@ class TranslatorCommand(sublime_plugin.TextCommand):
         view.run_command("append", {"characters": content})
 
     def handle_href(self, href):
-        if href == "replace":
-            self.view.run_command(self.name(), {"do_replace": True})
-
-        elif href == "copy":
-            sublime.set_clipboard(translation_task[2])
-            sublime.status_message("Translation copied to clipboard")
+        self.view.run_command(self.name(), {"action": href})
 
     def display(self, words, received):
         pops = {
@@ -112,7 +119,7 @@ class TranslatorCommand(sublime_plugin.TextCommand):
 
         if self.style in pops:
             show = pops[self.style]
-            show(translation_task[0], self.gen_markdown_text(words, received))
+            show(task.region, self.gen_markdown_text(words, received))
 
         elif self.style == "view":
             self.show_view(sublime.encode_value(received, pretty=True))
@@ -131,8 +138,8 @@ allow_code_wrap: true
 !!! {}
 """
 
-COPY_AND_REPLACE = """
-<span class="copy"><a href=copy>Copy</a></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="replace"><a href=replace>Replace</a></span>
+COPY_INSERT_REPLACE = """
+<span class="copy"><a href=copy>Copy</a></span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="insert"><a href=insert>Insert</a></span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="replace"><a href=replace>Replace</a></span>
 """
 
 
@@ -147,8 +154,8 @@ class YoudaoTranslator(TranslatorCommand):
             hash_algorithm.update(signStr.encode('utf-8'))
             return hash_algorithm.hexdigest()
 
-        q = translation_task[1]
-        translation_task[1] = None
+        q = task.words
+        task.words = None
 
         platform = MenusTranslator.platforms["youdao"]
         if ("app_id" in platform and "app_key" in platform and
@@ -210,8 +217,8 @@ class YoudaoTranslator(TranslatorCommand):
                     for i in range(0, len(explain), 24)
                 ])
                 body += "- {}\n".format(explain)
-            translation_task[2] = "\n".join(explains)
-            body += COPY_AND_REPLACE
+            task.result = "\n".join(explains)
+            body += COPY_INSERT_REPLACE
 
         if "web" in received:
             body += thread.format("## 网络释义:\n")
@@ -245,8 +252,8 @@ class MenusTranslator(MenusCreator):
             words = view.substr(selected)
             words = preprocess(words, self.separator)
             if len(words) > 0:
-                translation_task[0] = selected
-                translation_task[1] = words
+                task.region = selected
+                task.words = words
                 return True
 
         if self.auto_select is True:
@@ -254,8 +261,8 @@ class MenusTranslator(MenusCreator):
             region = view.word(pt)
             word = view.substr(region).strip(self.separator)
             if len(word) > 0:
-                translation_task[0] = region
-                translation_task[1] = word
+                task.region = region
+                task.words = word
                 return True
         return False
 
