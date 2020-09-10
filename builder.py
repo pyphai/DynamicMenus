@@ -20,10 +20,9 @@ class DynamicMenusToggleLogCommand(sublime_plugin.TextCommand):
 
 def load_plugin(plugin):
     def load_settings():
-        dynamic_menus = settings.get("dynamic_menus", {})
-        translator = dynamic_menus.get("translator", {})
-        search_online = dynamic_menus.get("search_online", {})
-        open_other_files = dynamic_menus.get("open_other_files", {})
+        translator = settings.get("translator", {})
+        search_online = settings.get("search_online", {})
+        open_other_files = settings.get("open_other_files", {})
         TranslatorCommand.style = translator.get("style", "popup")
         TranslatorCommand.mdpopups_css = translator.get("mdpopups.css",
             "Packages/DynamicMenus/mdpopups.css")

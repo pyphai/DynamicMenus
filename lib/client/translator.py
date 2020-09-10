@@ -180,7 +180,7 @@ class YoudaoTranslator(TranslatorCommand):
 
         else:
             data = { "q": q }
-            apiurl = "https://fanyi.youdao.com/openapi.do?keyfrom=divinites&key=1583185521&type=data&doctype=json&version=1.1&q=%s" % q
+            apiurl = "http://fanyi.youdao.com/openapi.do?keyfrom=divinites&key=1583185521&type=data&doctype=json&version=1.1"
 
         try:
             headers = {'Content-Type': 'application/x-www-form-urlencoded'}
