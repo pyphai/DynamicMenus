@@ -68,7 +68,7 @@ def write_context_menus(menus):
 def plugin_loaded():
     os.makedirs(menus_cache_dir(), exist_ok=True)
     write_context_menus([])
-    load_plugin(DynamicMenusContextMenus)
+    load_plugin(DynamicMenusEventListener)
 
 def plugin_unloaded():
     try:
@@ -78,7 +78,7 @@ def plugin_unloaded():
         pass
 
 
-class DynamicMenusContextMenus(sublime_plugin.EventListener):
+class DynamicMenusEventListener(sublime_plugin.EventListener):
     menus_opener = MenusOpener()
     menus_searcher = MenusSearcher()
     menus_translator = MenusTranslator()

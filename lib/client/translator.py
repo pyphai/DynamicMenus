@@ -158,12 +158,10 @@ class YoudaoTranslator(TranslatorCommand):
         task.words = None
 
         platform = MenusTranslator.platforms["youdao"]
-        if ("app_id" in platform and "app_key" in platform and
-            "api_url" in platform):
-            apiurl = platform["api_url"]
-            appKey = platform["app_id"]
-            secret = platform["app_key"]
-
+        apiurl = platform.get("api_url", "")
+        appKey = platform.get("app_id", "")
+        secret = platform.get("app_key", "")
+        if (apiurl and appKey and secret):
             curtime = str(int(time.time()))
             salt = str(uuid.uuid1())
             sign = encrypt(appKey + truncate(q) + salt + curtime + secret)
@@ -184,10 +182,12 @@ class YoudaoTranslator(TranslatorCommand):
 
         try:
             headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-            response = requests.post(apiurl, data=data, headers=headers)
+            response = requests.post(apiurl,
+                data=data, headers=headers, timeout=5)
             received = json.loads(response.content.decode('utf-8'))
         except Exception as e:
-            sublime.error_message(u"数据请求失败！")
+            sublime.error_message(e)
+            # sublime.error_message(u"数据请求失败！")
         else:
             self.display(q, received)
 
