@@ -186,8 +186,8 @@ class YoudaoTranslator(TranslatorCommand):
                 data=data, headers=headers, timeout=5)
             received = json.loads(response.content.decode('utf-8'))
         except Exception as e:
-            sublime.error_message(e)
-            # sublime.error_message(u"数据请求失败！")
+            Loger.error(e)
+            # Loger.error(u"数据请求失败！")
         else:
             self.display(q, received)
 
